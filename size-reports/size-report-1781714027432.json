@@ -1,0 +1,178 @@
+{
+  "timestamp": "2026-06-17T16:33:47.419Z",
+  "totalSize": 35582,
+  "totalGzipSize": 14660,
+  "fileCount": 24,
+  "categories": {
+    "core": {
+      "label": "核心包",
+      "totalSize": 574,
+      "totalGzipSize": 385,
+      "fileCount": 2,
+      "files": [
+        {
+          "path": "index.cjs.js",
+          "size": 332,
+          "gzipSize": 211
+        },
+        {
+          "path": "index.es.js",
+          "size": 242,
+          "gzipSize": 174
+        }
+      ]
+    },
+    "components": {
+      "label": "组件",
+      "totalSize": 234,
+      "totalGzipSize": 241,
+      "fileCount": 2,
+      "files": [
+        {
+          "path": "components/Button.cjs.js",
+          "size": 153,
+          "gzipSize": 150
+        },
+        {
+          "path": "components/Button.es.js",
+          "size": 81,
+          "gzipSize": 91
+        }
+      ]
+    },
+    "icons": {
+      "label": "图标",
+      "totalSize": 440,
+      "totalGzipSize": 334,
+      "fileCount": 2,
+      "files": [
+        {
+          "path": "icons.cjs.js",
+          "size": 267,
+          "gzipSize": 189
+        },
+        {
+          "path": "icons.es.js",
+          "size": 173,
+          "gzipSize": 145
+        }
+      ]
+    },
+    "styles": {
+      "label": "样式",
+      "totalSize": 1751,
+      "totalGzipSize": 636,
+      "fileCount": 1,
+      "files": [
+        {
+          "path": "components/Button/style.css",
+          "size": 1751,
+          "gzipSize": 636
+        }
+      ]
+    },
+    "shared": {
+      "label": "共享代码",
+      "totalSize": 29111,
+      "totalGzipSize": 11143,
+      "fileCount": 6,
+      "files": [
+        {
+          "path": "shared/Button-BVKheUSq.js",
+          "size": 1436,
+          "gzipSize": 744
+        },
+        {
+          "path": "shared/Button-DvBwmT0r.js",
+          "size": 1792,
+          "gzipSize": 820
+        },
+        {
+          "path": "shared/LoadingIcon-CBcBViYu.js",
+          "size": 1560,
+          "gzipSize": 744
+        },
+        {
+          "path": "shared/LoadingIcon-Ce-1XuM1.js",
+          "size": 1720,
+          "gzipSize": 821
+        },
+        {
+          "path": "shared/web-BUHyw-cu.js",
+          "size": 13027,
+          "gzipSize": 4253
+        },
+        {
+          "path": "shared/web-CESC785I.js",
+          "size": 9576,
+          "gzipSize": 3761
+        }
+      ]
+    },
+    "types": {
+      "label": "类型声明",
+      "totalSize": 1721,
+      "totalGzipSize": 1285,
+      "fileCount": 10,
+      "files": [
+        {
+          "path": "components/Button/Button.d.ts",
+          "size": 476,
+          "gzipSize": 294
+        },
+        {
+          "path": "components/Button/index.d.ts",
+          "size": 91,
+          "gzipSize": 80
+        },
+        {
+          "path": "components/index.d.ts",
+          "size": 26,
+          "gzipSize": 46
+        },
+        {
+          "path": "icons/ArrowRightIcon.d.ts",
+          "size": 119,
+          "gzipSize": 112
+        },
+        {
+          "path": "icons/CheckIcon.d.ts",
+          "size": 109,
+          "gzipSize": 107
+        },
+        {
+          "path": "icons/CloseIcon.d.ts",
+          "size": 109,
+          "gzipSize": 107
+        },
+        {
+          "path": "icons/Icon.d.ts",
+          "size": 289,
+          "gzipSize": 206
+        },
+        {
+          "path": "icons/LoadingIcon.d.ts",
+          "size": 184,
+          "gzipSize": 148
+        },
+        {
+          "path": "icons/index.d.ts",
+          "size": 263,
+          "gzipSize": 126
+        },
+        {
+          "path": "index.d.ts",
+          "size": 55,
+          "gzipSize": 59
+        }
+      ]
+    },
+    "other": {
+      "label": "其他",
+      "totalSize": 0,
+      "totalGzipSize": 0,
+      "fileCount": 0,
+      "files": []
+    }
+  }
+}

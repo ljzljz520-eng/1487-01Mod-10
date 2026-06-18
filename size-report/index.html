@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>包体积分析 - Solid Web Components UI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      color: #1f2937;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 32px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .header .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .stat-card .sub-value {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .stat-card .diff {
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .diff.positive {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .diff.negative {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .diff.neutral {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .section {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section h2 .icon {
+      width: 24px;
+      height: 24px;
+      background: #eef2ff;
+      color: #4f46e5;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: #f9fafb;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .category-header:hover {
+      background: #f3f4f6;
+    }
+
+    .category-header .left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .category-header .name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .category-header .count {
+      font-size: 12px;
+      color: #9ca3af;
+      background: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .category-header .sizes {
+      text-align: right;
+    }
+
+    .category-header .size-main {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .category-header .size-gzip {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .category-header .arrow {
+      transition: transform 0.2s;
+      color: #9ca3af;
+    }
+
+    .category-item.expanded .arrow {
+      transform: rotate(90deg);
+    }
+
+    .category-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .category-item.expanded .category-body {
+      max-height: 500px;
+    }
+
+    .file-list {
+      padding: 12px 16px;
+      background: white;
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 13px;
+    }
+
+    .file-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-item .name {
+      color: #374151;
+      font-family: monospace;
+    }
+
+    .file-item .sizes {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .file-item .size {
+      color: #6b7280;
+    }
+
+    .file-item .gzip {
+      color: #9ca3af;
+      font-size: 12px;
+    }
+
+    .file-item .bar-container {
+      width: 100px;
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .file-item .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 3px;
+    }
+
+    .warning-box {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .warning-box .icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .warning-box .content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+
+    .warning-box .content p {
+      font-size: 13px;
+      color: #78350f;
+      line-height: 1.5;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: #4f46e5;
+    }
+
+    .tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .history-item:hover {
+      background: #f9fafb;
+    }
+
+    .history-item .date {
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .history-item .size {
+      color: #6b7280;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+
+    .chart-container {
+      margin-top: 16px;
+    }
+
+    .chart-bar-group {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 200px;
+      padding: 20px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .chart-bar {
+      width: 40px;
+      background: linear-gradient(180deg, #667eea, #764ba2);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .chart-bar:hover {
+      opacity: 0.8;
+    }
+
+    .chart-bar .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .chart-bar:hover .tooltip {
+      opacity: 1;
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📦 包体积分析</h1>
+      <p>Solid Web Components UI - 构建产物体积监控</p>
+      <span class="badge">维护者内部页面</span>
+    </div>
+
+    <div class="warning-box">
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <h3>体积监控说明</h3>
+        <p>
+          此页面用于监控组件库构建产物的体积变化。如果某个组件体积突然增大，
+          请检查是否引入了不必要的依赖或资源文件。可视化详细分析请查看
+          <a href="stats.html" style="color: #92400e;">stats.html</a>。
+        </p>
+      </div>
+    </div>
+
+    <div id="loading" class="loading">正在加载体积数据...</div>
+
+    <div id="content" style="display: none;">
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="categories">分类详情</div>
+        <div class="tab" data-tab="top-files">最大文件</div>
+        <div class="tab" data-tab="history">历史趋势</div>
+      </div>
+
+      <div class="tab-content" id="tab-categories">
+        <div class="section">
+          <h2><span class="icon">📁</span> 体积分类</h2>
+          <div class="category-list" id="categoryList"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-top-files" style="display: none;">
+        <div class="section">
+          <h2><span class="icon">📊</span> Top 20 最大文件</h2>
+          <div class="file-list" id="topFilesList" style="padding: 0;"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-history" style="display: none;">
+        <div class="section">
+          <h2><span class="icon">📈</span> 体积趋势</h2>
+          <div class="chart-container">
+            <div class="chart-bar-group" id="chartBars"></div>
+            <div class="chart-labels" id="chartLabels"></div>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          报告生成时间: <span id="reportTime"></span> |
+          <a href="stats.html">可视化分析 (treemap)</a>
+        </p>
+        <p style="margin-top: 8px;">
+          命令: <code>npm run size</code> | 仅用于内部体积监控，不随 npm 包发布
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    function getDiffClass(diff) {
+      if (diff > 0) return 'positive';
+      if (diff < 0) return 'negative';
+      return 'neutral';
+    }
+
+    function formatDiff(diff) {
+      const sign = diff > 0 ? '+' : '';
+      return sign + formatSize(diff);
+    }
+
+    async function loadReport() {
+      try {
+        const response = await fetch('../size-reports/latest.json');
+        if (!response.ok) throw new Error('报告文件不存在');
+        const report = await response.json();
+        renderReport(report);
+      } catch (error) {
+        document.getElementById('loading').innerHTML =
+          '❌ 无法加载体积报告，请先运行 <code>npm run size</code> 生成报告';
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const response = await fetch('../size-reports/');
+        const text = await response.text();
+        const files = text.match(/href="([^"]+\.json)"/g) || [];
+        return files
+          .map((f) => f.replace('href="', '').replace('"', ''))
+          .filter((f) => f !== 'latest.json')
+          .sort()
+          .reverse();
+      } catch {
+        return [];
+      }
+    }
+
+    function renderReport(report) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      document.getElementById('reportTime').textContent = new Date(
+        report.timestamp
+      ).toLocaleString('zh-CN');
+
+      const statsGrid = document.getElementById('statsGrid');
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="label">总大小</div>
+          <div class="value">${formatSize(report.totalSize)}</div>
+          <div class="sub-value">gzip: ${formatSize(report.totalGzipSize)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">文件数量</div>
+          <div class="value">${report.fileCount}</div>
+          <div class="sub-value">个文件</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">组件数量</div>
+          <div class="value">${(report.categories.components?.fileCount || 0) / 2}?</div>
+          <div class="sub-value">个组件</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">样式大小</div>
+          <div class="value">${formatSize(report.categories.styles?.totalSize || 0)}</div>
+          <div class="sub-value">gzip: ${formatSize(report.categories.styles?.totalGzipSize || 0)}</div>
+        </div>
+      `;
+
+      renderCategories(report.categories);
+      renderTopFiles(report);
+      renderHistoryChart();
+    }
+
+    function renderCategories(categories) {
+      const list = document.getElementById('categoryList');
+      const sorted = Object.entries(categories).sort(
+        (a, b) => b[1].totalSize - a[1].totalSize
+      );
+
+      list.innerHTML = sorted
+        .filter(([, cat]) => cat.fileCount > 0)
+        .map(
+          ([key, cat], index) => `
+        <div class="category-item ${index === 0 ? 'expanded' : ''}" data-category="${key}">
+          <div class="category-header" onclick="toggleCategory(this)">
+            <div class="left">
+              <span class="arrow">▶</span>
+              <span class="name">${cat.label}</span>
+              <span class="count">${cat.fileCount} 个文件</span>
+            </div>
+            <div class="sizes">
+              <div class="size-main">${formatSize(cat.totalSize)}</div>
+              <div class="size-gzip">gzip: ${formatSize(cat.totalGzipSize)}</div>
+            </div>
+          </div>
+          <div class="category-body">
+            <div class="file-list">
+              ${cat.files
+                .sort((a, b) => b.size - a.size)
+                .map(
+                  (file) => `
+                <div class="file-item">
+                  <span class="name">${file.path}</span>
+                  <div class="sizes">
+                    <div class="bar-container">
+                      <div class="bar" style="width: ${(file.size / cat.totalSize) * 100}%"></div>
+                    </div>
+                    <span class="size">${formatSize(file.size)}</span>
+                    <span class="gzip">(${formatSize(file.gzipSize)})</span>
+                  </div>
+                </div>
+              `
+                )
+                .join('')}
+            </div>
+          </div>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    function renderTopFiles(report) {
+      const allFiles = [];
+      for (const cat of Object.values(report.categories)) {
+        allFiles.push(...cat.files);
+      }
+
+      const top20 = allFiles.sort((a, b) => b.size - a.size).slice(0, 20);
+      const maxSize = top20[0]?.size || 1;
+
+      const list = document.getElementById('topFilesList');
+      list.innerHTML = top20
+        .map(
+          (file) => `
+        <div class="file-item" style="padding: 12px 16px;">
+          <span class="name">${file.path}</span>
+          <div class="sizes">
+            <div class="bar-container" style="width: 150px;">
+              <div class="bar" style="width: ${(file.size / maxSize) * 100}%"></div>
+            </div>
+            <span class="size">${formatSize(file.size)}</span>
+            <span class="gzip">(${formatSize(file.gzipSize)})</span>
+          </div>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    async function renderHistoryChart() {
+      const historyFiles = await loadHistory();
+      const recent = historyFiles.slice(0, 10).reverse();
+
+      const sizes = [];
+      const labels = [];
+
+      for (const file of recent) {
+        try {
+          const res = await fetch('../size-reports/' + file);
+          const data = await res.json();
+          sizes.push(data.totalSize);
+          labels.push(formatDate(data.timestamp));
+        } catch {
+          // skip
+        }
+      }
+
+      if (sizes.length === 0) {
+        document.getElementById('chartBars').innerHTML =
+          '<p style="text-align: center; color: #9ca3af; width: 100%;">暂无历史数据</p>';
+        return;
+      }
+
+      const maxSize = Math.max(...sizes);
+      const bars = document.getElementById('chartBars');
+      const labelsEl = document.getElementById('chartLabels');
+
+      bars.innerHTML = sizes
+        .map(
+          (size, i) => `
+        <div class="chart-bar" style="height: ${(size / maxSize) * 100}%">
+          <div class="tooltip">${formatSize(size)}</div>
+        </div>
+      `
+        )
+        .join('');
+
+      labelsEl.innerHTML = labels.map((l) => `<span>${l}</span>`).join('');
+
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = recent
+        .reverse()
+        .slice(0, 5)
+        .map((file, i) => {
+          const size = sizes[sizes.length - 1 - i];
+          const prevSize = sizes[sizes.length - 2 - i];
+          const diff = prevSize ? size - prevSize : 0;
+          const diffClass = prevSize ? getDiffClass(diff) : 'neutral';
+
+          return `
+          <div class="history-item">
+            <span class="date">${labels[labels.length - 1 - i]}</span>
+            <div>
+              <span class="size">${formatSize(size)}</span>
+              ${prevSize ? `<span class="diff ${diffClass}" style="margin-left: 8px; font-size: 12px;">${formatDiff(diff)}</span>` : ''}
+            </div>
+          </div>
+        `;
+        })
+        .join('');
+    }
+
+    function toggleCategory(header) {
+      const item = header.parentElement;
+      item.classList.toggle('expanded');
+    }
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        document.querySelectorAll('.tab-content').forEach((content) => {
+          content.style.display = 'none';
+        });
+        document.getElementById('tab-' + tabName).style.display = 'block';
+      });
+    });
+
+    loadReport();
+  </script>
+</body>
+</html>

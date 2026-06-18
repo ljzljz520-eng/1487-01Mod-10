@@ -42,10 +42,11 @@ npm run publish
 
 ## 使用方法
 
-### 在 SolidJS 项目中使用
+### 全量引入
 
 ```tsx
 import { Button } from 'solid-web-components-ui';
+import 'solid-web-components-ui/dist/assets/style.css';
 
 function App() {
   return (
@@ -67,6 +68,9 @@ function App() {
       {/* 禁用按钮 */}
       <Button disabled>禁用按钮</Button>
 
+      {/* 加载状态按钮 */}
+      <Button loading>加载中</Button>
+
       {/* 带点击事件的按钮 */}
       <Button onClick={() => console.log('按钮被点击了！')}>
         点击我
@@ -77,6 +81,55 @@ function App() {
 
 export default App;
 ```
+
+### 按需引入
+
+为了减少打包体积，推荐按需引入组件。每个组件都有独立的入口文件。
+
+```tsx
+// 只引入 Button 组件
+import { Button } from 'solid-web-components-ui/components/Button';
+// 引入按钮样式（按需引入样式）
+import 'solid-web-components-ui/dist/components/Button/style.css';
+
+function App() {
+  return <Button variant="primary">按需引入按钮</Button>;
+}
+
+export default App;
+```
+
+### 按需引入图标
+
+```tsx
+import { CheckIcon, ArrowRightIcon } from 'solid-web-components-ui/icons';
+
+function App() {
+  return (
+    <div>
+      <CheckIcon size={20} color="#2563eb" />
+      <ArrowRightIcon size={16} />
+    </div>
+  );
+}
+
+export default App;
+```
+
+### 可用组件
+
+| 组件 | 引入路径 | 样式路径 |
+|-----|---------|---------|
+| Button | `solid-web-components-ui/components/Button` | `solid-web-components-ui/dist/components/Button/style.css` |
+
+### 可用图标
+
+| 图标 | 说明 |
+|-----|------|
+| CheckIcon | 勾选图标 |
+| CloseIcon | 关闭图标 |
+| ArrowRightIcon | 右箭头图标 |
+| LoadingIcon | 加载图标 |
 
 ### 作为 Web Component 使用
 
@@ -342,6 +395,7 @@ docker compose exec solid-web-components-ui npm run test
 |---------|------|
 | `npm run dev` | 启动开发服务器 |
 | `npm run build` | 构建项目 |
+| `npm run size` | 生成包体积分析报告 |
 | `npm run lint` | 代码质量检查 |
 | `npm run test` | 运行测试用例 |
 | `npm run preview` | 预览构建结果 |
@@ -353,10 +407,25 @@ docker compose exec solid-web-components-ui npm run test
 solid-web-components-ui/
 ├── src/
 │   ├── components/         # 组件目录
-│   │   ├── Button.tsx      # 按钮组件
-│   │   └── __tests__/      # 测试文件目录
-│   │       └── Button.test.tsx  # 按钮组件测试
-│   └── index.ts            # 入口文件
+│   │   └── Button/         # 按钮组件
+│   │       ├── Button.tsx  # 按钮组件实现
+│   │       ├── style.css   # 按钮样式
+│   │       ├── index.ts    # 按钮入口
+│   │       └── __tests__/  # 测试文件
+│   │           └── Button.test.tsx
+│   ├── icons/              # 图标目录
+│   │   ├── Icon.tsx        # 图标基础组件
+│   │   ├── CheckIcon.tsx
+│   │   ├── CloseIcon.tsx
+│   │   ├── ArrowRightIcon.tsx
+│   │   ├── LoadingIcon.tsx
+│   │   └── index.ts        # 图标入口
+│   └── index.ts            # 主入口文件
+├── scripts/                # 脚本目录
+│   └── size-report.js      # 体积分析脚本
+├── size-report/            # 体积报告页面（维护者用）
+│   └── index.html
+├── size-reports/           # 历史体积报告数据
 ├── .eslintrc.cjs           # ESLint 配置
 ├── Dockerfile              # Docker 构建文件
 ├── docker-compose.yml      # Docker 部署配置
@@ -374,7 +443,70 @@ solid-web-components-ui/
 - **编程语言**：TypeScript
 - **UI 框架**：SolidJS
 - **测试框架**：Vitest
+- **体积分析**：rollup-plugin-visualizer
 - **Docker**：支持容器化部署
+
+## 包体积分析（维护者专用）
+
+组件库内置了完整的包体积分析工具，帮助维护者监控构建产物的体积变化。
+
+### 生成体积报告
+
+```bash
+# 1. 先构建项目
+npm run build
+
+# 2. 生成体积分析报告（控制台输出）
+npm run size
+```
+
+### 可视化体积分析
+
+构建完成后，会在 `dist/stats.html` 生成 treemap 格式的可视化报告：
+
+```bash
+# 构建后自动生成 stats.html
+npm run build
+
+# 在浏览器中打开 dist/stats.html 查看
+open dist/stats.html
+```
+
+> **注意**：`dist/stats.html` 仅用于本地体积分析，不会随 npm 包发布。
+
+### 体积报告页面
+
+项目提供了维护者专用的体积监控页面：
+
+```bash
+# 打开 size-report/index.html 查看
+open size-report/index.html
+```
+
+体积报告页面包含：
+- **分类统计**：核心包、组件、样式、图标、共享代码、类型声明的体积
+- **Top 文件**：体积最大的文件排行
+- **历史趋势**：多次构建的体积变化记录
+- **Gzip 大小**：显示压缩后的体积
+
+### 体积突然变大排查
+
+如果某个组件体积突然增大，可以通过以下方式定位原因：
+
+1. **查看可视化报告**：打开 `dist/stats.html`，找到体积异常的模块
+2. **检查新增依赖**：确认组件是否引入了新的第三方依赖
+3. **检查静态资源**：确认是否有大图片、字体等资源被打包
+4. **对比历史报告**：运行 `npm run size` 查看与上次构建的差异
+5. **查看组件代码**：检查是否有重复代码或未使用的代码
+
+### 按需引入最佳实践
+
+为了让用户获得最小的打包体积，请遵循以下规范：
+
+- 每个组件独立入口，确保 Tree Shaking 有效
+- 样式文件与组件分离，支持单独引入
+- 避免在组件中全量引入依赖
+- 使用动态导入减少首屏加载体积
 
 ## 贡献
 
